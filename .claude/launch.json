@@ -1,0 +1,41 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "rozkaam-mobile",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "apps/mobile",
+        "run",
+        "web",
+        "--",
+        "--port",
+        "8081"
+      ],
+      "port": 8081
+    },
+    {
+      "name": "rozkaam-admin",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "apps/admin",
+        "run",
+        "dev"
+      ],
+      "port": 5180
+    },
+    {
+      "name": "rozkaam-api",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "apps/api",
+        "run",
+        "dev"
+      ],
+      "port": 4000
+    }
+  ]
+}
