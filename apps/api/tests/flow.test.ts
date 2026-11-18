@@ -67,7 +67,8 @@ async function newWorker(phone: string, name: string, admin: string) {
 }
 
 beforeAll(async () => {
-  const opened = await openDb();
+  // Set TEST_DATABASE_URL to run the same flow against a real Postgres server.
+  const opened = await openDb({ url: process.env.TEST_DATABASE_URL });
   app = createApp(opened.db);
   close = opened.close;
   at('2026-11-18T10:00:00+05:30');

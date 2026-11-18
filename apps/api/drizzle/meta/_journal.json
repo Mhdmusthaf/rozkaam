@@ -8,6 +8,13 @@
       "when": 1794993048183,
       "tag": "0000_slippery_galactus",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795011088327,
+      "tag": "0001_giant_betty_ross",
+      "breakpoints": true
     }
   ]
 }

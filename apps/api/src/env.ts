@@ -18,13 +18,34 @@ const schema = z.object({
   SANDBOX_OTP: z.string().regex(/^\d{6}$/).default('123456'),
   ADMIN_PHONES: z.string().default(''),
   DATA_DIR: z.string().default('.data'),
-  UPLOAD_DIR: z.string().default('uploads'),
+  NODE_ENV: z.string().default('development'),
+  // Comma-separated website addresses allowed to call the API. Empty = any (local development only).
+  CORS_ORIGINS: z.string().default(''),
 });
 
 const parsed = schema.parse(process.env);
 
+const production = parsed.NODE_ENV === 'production';
+
+// A hosted server must never run on the well-known development values:
+// with them, anyone could sign in as anyone.
+if (production) {
+  const problems = [
+    parsed.JWT_SECRET === 'dev-only-secret-change-me-please-32chars' && 'JWT_SECRET is still the development value',
+    parsed.SMS_PROVIDER === 'sandbox' && parsed.SANDBOX_OTP === '123456' && 'SANDBOX_OTP is still 123456',
+    !parsed.DATABASE_URL && 'DATABASE_URL is not set',
+    !parsed.CORS_ORIGINS && 'CORS_ORIGINS is not set',
+  ].filter(Boolean);
+  if (problems.length) {
+    console.error(`Refusing to start in production:\n - ${problems.join('\n - ')}`);
+    process.exit(1);
+  }
+}
+
 export const env = {
   ...parsed,
+  production,
+  corsOrigins: parsed.CORS_ORIGINS.split(',').map((o) => o.trim().replace(/\/$/, '')).filter(Boolean),
   DATABASE_URL: parsed.DATABASE_URL || undefined,
   adminPhones: parsed.ADMIN_PHONES.split(',').map((p) => p.trim()).filter(Boolean),
 };

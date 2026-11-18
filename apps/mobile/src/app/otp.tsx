@@ -86,7 +86,7 @@ export default function Otp() {
         )}
       </View>
 
-      <Banner tone="violet" icon="flask" title="Sandbox mode" text={hasApi ? 'No SMS is sent yet. The test code is 123456.' : 'No SMS is sent yet. Enter any 6 digits to continue.'} style={{ marginTop: 24 }} />
+      <Banner tone="violet" icon="flask" title="Sandbox mode" text={!hasApi ? 'No SMS is sent yet. Enter any 6 digits to continue.' : __DEV__ ? 'No SMS is sent yet. The test code is 123456.' : 'SMS is not switched on yet. Ask the Rozkaam team for the test code.'} style={{ marginTop: 24 }} />
     </Screen>
   );
 }

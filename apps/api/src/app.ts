@@ -7,8 +7,10 @@ import { cors } from 'hono/cors';
 import { z, ZodError } from 'zod';
 
 import { schema, type Db } from './db/client';
+import { env } from './env';
 import { now } from './lib/clock';
 import { AppError, bad, forbidden, notFound } from './lib/errors';
+import { rateLimit } from './lib/rate-limit';
 import { isAllowedType, MAX_UPLOAD_BYTES, readStoredFile, saveFile } from './providers/storage';
 import * as accounts from './services/accounts';
 import * as admin from './services/admin';
@@ -25,7 +27,10 @@ const uuid = (c: C, name = 'id') => z.string().uuid().parse(c.req.param(name));
 
 export function createApp(db: Db) {
   const app = new Hono<Env>();
-  app.use('*', cors());
+  // In production only the listed websites may call the API from a browser.
+  app.use('*', cors({ origin: env.corsOrigins.length ? env.corsOrigins : '*' }));
+  // Slow down code guessing: at most 8 sign-in calls a minute per phone and per address.
+  app.use('/v1/auth/otp/*', rateLimit({ perMinute: 8 }));
 
   app.onError((err, c) => {
     if (err instanceof AppError) return c.json({ error: { code: err.code, message: err.message } }, err.status);
@@ -99,15 +104,14 @@ export function createApp(db: Db) {
     if (!(file instanceof File)) throw bad('no_file', 'Attach a file.');
     if (!isAllowedType(file.type)) throw bad('bad_type', 'Upload a JPG, PNG, WebP or PDF file.');
     if (file.size > MAX_UPLOAD_BYTES) throw bad('too_large', 'The file is larger than 8 MB.');
-    const key = await saveFile(new Uint8Array(await file.arrayBuffer()), file.type);
-    await db.insert(schema.files).values({ key, ownerId: me(c).id, contentType: file.type });
+    const key = await saveFile(db, me(c).id, new Uint8Array(await file.arrayBuffer()), file.type);
     return c.json({ key });
   });
   // Private files: the owner and admins can read them. A business can read the
   // check-in photos for its own requirements.
   app.get('/v1/files/:key', async (c) => {
     const key = c.req.param('key');
-    const [f] = await db.select().from(schema.files).where(eq(schema.files.key, key));
+    const f = await readStoredFile(db, key);
     if (!f) throw notFound('File');
     const u = me(c);
     let allowed = u.role === 'admin' || f.ownerId === u.id;
@@ -122,8 +126,7 @@ export function createApp(db: Db) {
       allowed = !!hit;
     }
     if (!allowed) throw notFound('File');
-    const bytes = await readStoredFile(key);
-    const copy = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+    const copy = f.bytes.buffer.slice(f.bytes.byteOffset, f.bytes.byteOffset + f.bytes.byteLength) as ArrayBuffer;
     return new Response(copy, { headers: { 'content-type': f.contentType, 'cache-control': 'private, max-age=300' } });
   });
 

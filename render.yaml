@@ -1,0 +1,82 @@
+# Rozkaam on Render: one file that creates everything.
+# In Render: New + > Blueprint > pick this repository > Apply.
+# It creates the database, the API, the admin panel and the web app.
+
+databases:
+  - name: rozkaam-db
+    plan: free
+    region: singapore
+
+services:
+  # The backend that all three apps talk to.
+  - type: web
+    name: rozkaam-api
+    runtime: node
+    plan: free
+    region: singapore
+    rootDir: apps/api
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: rozkaam-db
+          property: connectionString
+      # A long random value Render creates for you. Signs login tokens.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SMS_PROVIDER
+        value: sandbox
+      # You type these three in Render when you apply the blueprint.
+      # SANDBOX_OTP: a private 6-digit code of your choice (not 123456).
+      - key: SANDBOX_OTP
+        sync: false
+      # ADMIN_PHONES: the 10-digit mobile numbers allowed to open the admin panel, comma separated.
+      - key: ADMIN_PHONES
+        sync: false
+      # CORS_ORIGINS: the addresses of the admin panel and web app, comma separated,
+      # e.g. https://rozkaam-admin.onrender.com,https://rozkaam-app.onrender.com
+      - key: CORS_ORIGINS
+        sync: false
+
+  # The admin panel for the ops team.
+  - type: web
+    name: rozkaam-admin
+    runtime: static
+    rootDir: apps/admin
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: rozkaam-api
+          envVarKey: RENDER_EXTERNAL_URL
+
+  # The worker and business app, as a website (the same code builds the phone apps).
+  - type: web
+    name: rozkaam-app
+    runtime: static
+    rootDir: apps/mobile
+    buildCommand: npm ci && npm run build:web
+    staticPublishPath: dist
+    routes:
+      # Every address is handled by the app itself.
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: EXPO_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: rozkaam-api
+          envVarKey: RENDER_EXTERNAL_URL

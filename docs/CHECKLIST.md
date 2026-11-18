@@ -127,16 +127,22 @@ Lives in `apps/api`. 22 automatic tests pass, including the whole loop through t
 | Live providers: MSG91, Cloudflare R2, Razorpay, payouts, KYC | [ ] |
 | Automatic tests for money, strikes, cancellation, distance | [x] |
 | Demo data loader for the real database | [ ] |
-| Connect the mobile app to the API (replace demo data) | [ ] |
-| Connect the admin panel to the API (replace demo data) | [ ] |
-| Rate limiting on sign-in and uploads | [ ] |
+| Connect the mobile app to the API (replace demo data) | [x] business side browser-tested; worker side not yet |
+| Connect the admin panel to the API (replace demo data) | [x] script-tested, not yet browser-tested |
+| Rate limiting on sign-in | [x] |
+| Uploaded files stored in the database (durable on any host) | [x] |
+| Refuses to start in production with unsafe settings | [x] |
+| Admin: cancel a requirement, replace a confirmed worker | [ ] |
+| Pin the venue on a map when posting (real coordinates) | [ ] |
 
 ## F. Launch
 
 | Piece | Status |
 |---|---|
 | Accounts from docs/SETUP.md created | [ ] |
-| Hosted database, API, admin panel | [ ] |
+| Hosting file (`render.yaml`) and guide (`docs/DEPLOY.md`) | [x] |
+| Production builds of API, admin panel and web app verified locally | [x] |
+| Hosted database, API, admin panel, web app | [ ] needs GitHub + Render accounts |
 | Android test build, then Play Store | [ ] |
 | iOS test build, then App Store | [ ] |
 | Real SMS OTP (MSG91 + DLT) | [ ] |

@@ -1,11 +1,13 @@
 // Rozkaam database tables. One system of record for the worker app, the
 // business app and the admin panel. Money is stored in paise (whole numbers).
 import { sql } from 'drizzle-orm';
-import { boolean, date, doublePrecision, index, integer, jsonb, pgEnum, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import { boolean, customType, date, doublePrecision, index, integer, jsonb, pgEnum, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
 
 const id = () => uuid('id').primaryKey().default(sql`gen_random_uuid()`);
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
 const ts = (name: string) => timestamp(name, { withTimezone: true });
+/** Raw bytes (Postgres bytea). */
+const bytea = customType<{ data: Buffer }>({ dataType: () => 'bytea' });
 
 export const roleEnum = pgEnum('role', ['worker', 'business', 'admin']);
 export const accountStatusEnum = pgEnum('account_status', ['active', 'restricted', 'suspended', 'banned']);
@@ -255,6 +257,7 @@ export const files = pgTable('files', {
   key: text('key').primaryKey(),
   ownerId: uuid('owner_id').notNull().references(() => users.id),
   contentType: text('content_type').notNull(),
+  data: bytea('data').notNull(),
   createdAt: createdAt(),
 });
 
