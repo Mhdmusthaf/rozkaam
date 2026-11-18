@@ -129,9 +129,8 @@ export default function RequirementDetail() {
         <Btn
           title={`Fund ${inr(cost.total)}`}
           icon="lock-closed"
-          onPress={() => {
-            fund(job.id);
-            router.push(`/business/funded?id=${job.id}`);
+          onPress={async () => {
+            if (await fund(job.id)) router.push(`/business/funded?id=${job.id}`);
           }}
         />
         <Btn title="Delete draft" variant="ghost" size="md" onPress={() => setSheet('cancel')} />
@@ -375,9 +374,9 @@ export default function RequirementDetail() {
           <Btn
             title={st === 'awaiting_funding' ? 'Delete draft' : 'Yes, cancel and refund'}
             variant="danger"
-            onPress={() => {
-              cancelRequirement(job.id);
+            onPress={async () => {
               setSheet(null);
+              if (!(await cancelRequirement(job.id))) return;
               showToast(st === 'awaiting_funding' ? 'Draft deleted' : `Cancelled. ${inr(cost.total)} refunded`, 'info');
               router.replace('/business/requirements');
             }}
@@ -405,10 +404,9 @@ export default function RequirementDetail() {
           <Btn
             title="Approve and release pay"
             icon="checkmark-done"
-            onPress={() => {
-              approveAttendance(job.id);
+            onPress={async () => {
               setSheet(null);
-              showToast(`Pay released to ${worked} workers`);
+              if (await approveAttendance(job.id)) showToast(`Pay released to ${worked} workers`);
             }}
           />
           <Btn title="Not yet" variant="outline" onPress={() => setSheet(null)} />
@@ -424,10 +422,10 @@ export default function RequirementDetail() {
           <Btn
             title="Mark no-show"
             variant="danger"
-            onPress={() => {
-              if (noShow) markNoShow(job.id, noShow.id);
+            onPress={async () => {
+              const target = noShow;
               setNoShow(null);
-              showToast('Marked as no-show', 'info');
+              if (target && (await markNoShow(job.id, target.id))) showToast('Marked as no-show', 'info');
             }}
           />
           <Btn title="Wait a little longer" variant="outline" onPress={() => setNoShow(null)} />

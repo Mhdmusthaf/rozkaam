@@ -32,8 +32,8 @@ export default function Withdraw() {
         <Btn
           title={ok ? `Withdraw ${inr(amount)}` : 'Withdraw'}
           disabled={!ok}
-          onPress={() => {
-            withdraw(amount);
+          onPress={async () => {
+            if (!(await withdraw(amount, dest))) return;
             toast('Withdrawal requested');
             router.back();
           }}

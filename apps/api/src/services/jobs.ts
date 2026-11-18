@@ -10,9 +10,10 @@ import { collectFunding } from '../providers/payments';
 import { assess, checkInWindow, distanceMeters, isLate } from '../rules/attendance';
 import { fundingTotal, settlement, slotMoney } from '../rules/money';
 import { isLateCancel } from '../rules/reliability';
+import { reliabilityScore } from '../rules/reliability';
 import { addStrike, audit, getSettings, notify } from './core';
 
-const { jobs, applications, attendance, ledger, businesses, workerProfiles, users, ratings } = schema;
+const { jobs, applications, attendance, ledger, businesses, workerProfiles, users, ratings, strikes } = schema;
 
 type Job = typeof jobs.$inferSelect;
 type Application = typeof applications.$inferSelect;
@@ -211,9 +212,18 @@ export async function roster(db: Tx, jobId: string, includePending: boolean) {
     .from(attendance)
     .where(inArray(attendance.applicationId, rows.length ? rows.map((r) => r.app.id) : ['00000000-0000-0000-0000-000000000000']));
   const rated = await db.select().from(ratings).where(and(eq(ratings.direction, 'business_to_worker'), inArray(ratings.applicationId, rows.length ? rows.map((r) => r.app.id) : ['00000000-0000-0000-0000-000000000000'])));
+  const strikeRows = await db
+    .select({ workerId: strikes.workerId, n: sql<number>`count(*)::int` })
+    .from(strikes)
+    .where(and(eq(strikes.excused, false), inArray(strikes.workerId, rows.length ? rows.map((r) => r.app.workerId) : ['00000000-0000-0000-0000-000000000000'])))
+    .groupBy(strikes.workerId);
+  const activeStrikes = (workerId: string) => strikeRows.find((x) => x.workerId === workerId)?.n ?? 0;
   return rows
     .filter((r) => includePending || !['applied', 'rejected', 'cancelled'].includes(r.app.status))
     .map((r) => ({
+      activeStrikes: activeStrikes(r.app.workerId),
+      reliability: reliabilityScore(activeStrikes(r.app.workerId)),
+      appliedAt: r.app.appliedAt,
       applicationId: r.app.id,
       workerId: r.app.workerId,
       status: r.app.status,
@@ -323,7 +333,18 @@ export async function listWorkerApplications(db: Db, workerId: string) {
     .innerJoin(businesses, eq(businesses.id, jobs.businessId))
     .where(eq(applications.workerId, workerId))
     .orderBy(desc(jobs.startsAt));
-  return rows.map((r) => ({ ...r.app, job: workerView(r.job, r.business, 0, null, ['confirmed', 'checked_in'].includes(r.app.status)) }));
+  const ids = rows.length ? rows.map((r) => r.app.id) : ['00000000-0000-0000-0000-000000000000'];
+  const att = await db.select().from(attendance).where(inArray(attendance.applicationId, ids));
+  const mine = await db.select().from(ratings).where(and(eq(ratings.direction, 'worker_to_business'), inArray(ratings.applicationId, ids)));
+  return Promise.all(
+    rows.map(async (r) => ({
+      ...r.app,
+      job: workerView(r.job, r.business, await countByStatus(db, r.job.id, HOLDING), null, ['confirmed', 'checked_in'].includes(r.app.status)),
+      checkIn: att.find((a) => a.applicationId === r.app.id && a.kind === 'in') ?? null,
+      checkOut: att.find((a) => a.applicationId === r.app.id && a.kind === 'out') ?? null,
+      ratedBusiness: mine.find((x) => x.applicationId === r.app.id)?.stars ?? null,
+    })),
+  );
 }
 
 export async function getWorkerApplication(db: Db, workerId: string, applicationId: string) {

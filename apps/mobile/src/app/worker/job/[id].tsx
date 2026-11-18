@@ -58,9 +58,10 @@ export default function JobDetail() {
   const first = words[0]!;
   const rest = words.slice(1).join(' ');
 
-  const doApply = () => {
+  const doApply = async () => {
     setConfirm(false);
-    const appId = apply(job.id);
+    const appId = await apply(job.id);
+    if (!appId) return;
     toast('Application sent');
     router.replace(`/worker/gig/${appId}`);
   };
@@ -116,7 +117,7 @@ export default function JobDetail() {
               {job.business}
             </Text>
             <Text numberOfLines={1} style={{ fontFamily: F.medium, fontSize: 12, color: SOFT }}>
-              Verified · {job.businessRating.toFixed(1)} rating · {job.businessJobs} jobs posted
+              Verified{job.businessRating ? ` · ${job.businessRating.toFixed(1)} rating` : ' · New on Rozkaam'}{job.businessJobs ? ` · ${job.businessJobs} jobs posted` : ''}
             </Text>
           </View>
         </View>

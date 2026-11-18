@@ -3,7 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 
 import { dayLabel, inr, time12 } from '@/lib/format';
-import { jobCost, useJob } from '@/store';
+import { jobCost, useJob, useStore } from '@/store';
 import { Btn, C, Card, IconTile, IMG, Screen, T } from '@/ui';
 
 const NEXT = [
@@ -16,6 +16,7 @@ const NEXT = [
 export default function Funded() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const job = useJob(id);
+  const demo = useStore((s) => s.mode === 'demo');
 
   return (
     <Screen
@@ -60,7 +61,7 @@ export default function Funded() {
       </Card>
 
       <T v="caption" color={C.muted} center style={{ marginTop: 14 }}>
-        Sandbox mode: this funding was simulated and no real money moved. In this demo, sample applicants appear within a few seconds.
+        Sandbox mode: this funding was simulated and no real money moved.{demo ? ' In this demo, sample applicants appear within a few seconds.' : ''}
       </T>
     </Screen>
   );

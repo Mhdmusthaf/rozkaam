@@ -27,8 +27,11 @@ export default function RateWorkers() {
   const value = (rid: string, saved?: number) => draft[rid] ?? saved ?? 0;
   const changed = Object.keys(draft).length;
 
-  const save = () => {
-    Object.entries(draft).forEach(([rid, stars]) => rateWorker(job.id, rid, stars));
+  const save = async () => {
+    // One at a time, so a failure stops cleanly and shows its message.
+    for (const [rid, stars] of Object.entries(draft)) {
+      if (!(await rateWorker(job.id, rid, stars))) return;
+    }
     showToast(`Saved ${changed} rating${changed === 1 ? '' : 's'}`);
     router.back();
   };

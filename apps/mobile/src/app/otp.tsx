@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { ComponentRef, useEffect, useRef, useState } from 'react';
 import { Platform, Pressable, Text, TextInput, View } from 'react-native';
 
+import { hasApi } from '@/api/client';
 import { useStore } from '@/store';
 import { Banner, Btn, C, F, Header, R, Screen, T } from '@/ui';
 
@@ -10,6 +11,7 @@ const LEN = 6;
 export default function Otp() {
   const { phone = '' } = useLocalSearchParams<{ phone: string }>();
   const signIn = useStore((s) => s.signIn);
+  const requestCode = useStore((s) => s.requestCode);
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [wait, setWait] = useState(30);
@@ -21,15 +23,17 @@ export default function Otp() {
     return () => clearTimeout(t);
   }, [wait]);
 
-  const verify = (value = code) => {
+  const verify = async (value = code) => {
     if (value.length < LEN || busy) return;
     setBusy(true);
-    // Sandbox: any 6 digits are accepted. A real SMS provider replaces this.
-    setTimeout(() => {
-      signIn(`${phone.slice(0, 5)} ${phone.slice(5)}`);
-      router.dismissAll?.();
-      router.replace('/');
-    }, 700);
+    const ok = await signIn(phone, value);
+    setBusy(false);
+    if (!ok) {
+      setCode('');
+      return;
+    }
+    router.dismissAll?.();
+    router.replace('/');
   };
 
   return (
@@ -76,13 +80,13 @@ export default function Otp() {
             Resend code in {wait}s
           </T>
         ) : (
-          <T v="smallM" color={C.violet} onPress={() => setWait(30)}>
+          <T v="smallM" color={C.violet} onPress={() => (setWait(30), void requestCode(phone))}>
             Resend code
           </T>
         )}
       </View>
 
-      <Banner tone="violet" icon="flask" title="Sandbox mode" text="No SMS is sent yet. Enter any 6 digits to continue." style={{ marginTop: 24 }} />
+      <Banner tone="violet" icon="flask" title="Sandbox mode" text={hasApi ? 'No SMS is sent yet. The test code is 123456.' : 'No SMS is sent yet. Enter any 6 digits to continue.'} style={{ marginTop: 24 }} />
     </Screen>
   );
 }

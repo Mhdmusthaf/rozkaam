@@ -47,13 +47,14 @@ export default function WorkerOnboarding() {
     return Object.keys(e).length === 0;
   };
 
-  const next = () => {
-    if (!validate()) return;
-    if (step < TOTAL) setStep(step + 1);
-    else {
-      submit();
-      router.replace('/onboarding/review');
-    }
+  const [busy, setBusy] = useState(false);
+  const next = async () => {
+    if (!validate() || busy) return;
+    if (step < TOTAL) return setStep(step + 1);
+    setBusy(true);
+    const ok = await submit();
+    setBusy(false);
+    if (ok) router.replace('/onboarding/review');
   };
   const back = () => (step > 1 ? setStep(step - 1) : router.replace('/role'));
   const toggleSkill = (s: string) => update({ skills: w.skills.includes(s) ? w.skills.filter((x) => x !== s) : [...w.skills, s] });
@@ -63,7 +64,7 @@ export default function WorkerOnboarding() {
   };
 
   return (
-    <Screen header={<Header onBack={back} />} footer={<Btn title={step === TOTAL ? 'Submit for verification' : 'Continue'} onPress={next} iconRight={step === TOTAL ? undefined : 'arrow-forward'} />}>
+    <Screen header={<Header onBack={back} />} footer={<Btn title={step === TOTAL ? 'Submit for verification' : 'Continue'} loading={busy} onPress={next} iconRight={step === TOTAL ? undefined : 'arrow-forward'} />}>
       {step === 1 && (
         <>
           <StepHead step={1} total={TOTAL} title="About you" text="This is shown to businesses once you are confirmed for a job." />

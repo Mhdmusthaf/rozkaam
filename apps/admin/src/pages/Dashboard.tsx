@@ -39,7 +39,7 @@ function BarChart({ data }: { data: { label: string; gmv: number }[] }) {
 }
 
 export default function Dashboard() {
-  const { db } = useStore();
+  const { db, live, ledgerTruncated } = useStore();
   const m = useMetrics();
   const q = useQueueCounts();
   const statuses: ReqStatus[] = ['open', 'filled', 'in_progress', 'awaiting_funding', 'completed', 'cancelled'];
@@ -55,7 +55,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <PageHead title="Dashboard" sub="All figures come from the demo ledger. GMV, worker payouts and Rozkaam revenue are tracked separately." />
+      <PageHead title="Dashboard" sub={live ? `Money totals come from the server's ledger. GMV, worker payouts and Rozkaam revenue are tracked separately.${ledgerTruncated ? ' The weekly chart and active counts use the latest 500 ledger entries only.' : ''}` : 'All figures come from the demo ledger. GMV, worker payouts and Rozkaam revenue are tracked separately.'} />
       <div className="grid kpis">
         <Kpi accent label="GMV (work value)" value={inrShort(m.gmv)} hint="Total value of completed work. Not revenue." icon={<TrendingUp size={16} />} />
         <Kpi label="Rozkaam revenue" value={inrShort(m.revenue)} hint="Commission earned on completed work" icon={<Percent size={16} />} />

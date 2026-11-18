@@ -88,9 +88,9 @@ export default function Account() {
         <Btn
           title="Sign out"
           variant="danger"
-          onPress={() => {
+          onPress={async () => {
             setOut(false);
-            signOut();
+            await signOut();
             router.replace('/');
           }}
         />

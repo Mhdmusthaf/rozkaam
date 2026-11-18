@@ -10,7 +10,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { Platform, Text, View } from 'react-native';
+import { AppState, Platform, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useStore } from '@/store';
@@ -44,11 +44,33 @@ export default function RootLayout() {
     ...Ionicons.font,
   });
 
-  useEffect(() => {
-    if (loaded || error) SplashScreen.hideAsync();
-  }, [loaded, error]);
+  const ready = useStore((s) => s.ready);
+  const restore = useStore((s) => s.restore);
+  const refresh = useStore((s) => s.refresh);
 
-  if (!loaded && !error) return null;
+  // Check for a saved login once, before the first screen is shown.
+  useEffect(() => {
+    restore();
+  }, [restore]);
+
+  // While signed in to the server, pick up changes made elsewhere (an ops
+  // approval, a payout) every few seconds and whenever the app comes back.
+  useEffect(() => {
+    const timer = setInterval(refresh, 8000);
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') refresh();
+    });
+    return () => {
+      clearInterval(timer);
+      sub.remove();
+    };
+  }, [refresh]);
+
+  useEffect(() => {
+    if ((loaded || error) && ready) SplashScreen.hideAsync();
+  }, [loaded, error, ready]);
+
+  if ((!loaded && !error) || !ready) return null;
 
   // On the web the app is shown inside a phone-width column.
   return (

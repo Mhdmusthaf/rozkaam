@@ -37,8 +37,8 @@ export default function Flags() {
                       <td><Person name={w.name} sub={`Reliability ${w.reliability} · ${w.strikes.filter((s) => !s.excused).length} strikes`} /></td>
                       <td><Link to={`/requirements/${r.id}`}><b>{r.title}</b></Link><div className="muted small">{r.id} · {business(r.businessId).name}</div></td>
                       <td className="nowrap num">{fmtDateTime(c.time)}</td>
-                      <td>{c.flag === 'distance' ? <Pill tone="bad"><MapPinOff size={12} /> Outside geofence</Pill> : <Pill tone="warn"><CameraOff size={12} /> No photo</Pill>}</td>
-                      <td className="num nowrap" style={c.distanceM > limit ? { color: 'var(--bad)', fontWeight: 700 } : undefined}>{c.distanceM.toLocaleString('en-IN')} m</td>
+                      <td>{c.flag === 'distance' ? <Pill tone="bad"><MapPinOff size={12} /> {c.reason === 'No location' ? 'No location' : 'Outside geofence'}</Pill> : <Pill tone="warn"><CameraOff size={12} /> No photo</Pill>}</td>
+                      <td className="num nowrap" style={c.distanceM > limit ? { color: 'var(--bad)', fontWeight: 700 } : undefined}>{c.distanceM < 0 ? '—' : `${c.distanceM.toLocaleString('en-IN')} m`}</td>
                       <td className="right">
                         {c.resolved ? (
                           <Pill tone={c.resolved === 'accepted' ? 'ok' : 'bad'}>{c.resolved === 'accepted' ? 'Accepted' : 'No-show'}</Pill>

@@ -18,7 +18,7 @@ export function useQueueCounts() {
 }
 
 export default function Layout() {
-  const { logout } = useStore();
+  const { logout, live, loading, adminPhone, refresh } = useStore();
   const c = useQueueCounts();
   const [open, setOpen] = useState(false);
   const loc = useLocation();
@@ -60,7 +60,7 @@ export default function Layout() {
         <div className="sidebar-foot">
           <div className="avatar" style={{ background: 'rgba(255,255,255,.12)', color: '#fff' }}>DA</div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: 13 }}>Demo Admin</div>
+            <div style={{ fontWeight: 700, fontSize: 13 }}>{live ? (adminPhone ? `+91 ${adminPhone}` : 'Ops admin') : 'Demo Admin'}</div>
             <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,.55)' }}>Ops team</div>
           </div>
           <button onClick={logout} aria-label="Sign out" title="Sign out"><LogOut size={17} /></button>
@@ -72,7 +72,14 @@ export default function Layout() {
           <button className="icon-btn menu-btn" onClick={() => setOpen(true)} aria-label="Open menu"><Menu size={20} /></button>
           <span className="row gap-6 muted small"><BookText size={15} /> Kochi · Ernakulam operations</span>
           <span className="grow" />
-          <span className="demo-tag">Demo data</span>
+          {live ? (
+            <>
+              <button className="btn sm ghost" onClick={() => void refresh()} disabled={loading}>{loading ? 'Loading…' : 'Refresh'}</button>
+              <span className="demo-tag" style={{ background: 'var(--ok-soft, #e2f6ea)', color: 'var(--ok, #0f8a45)' }}>Live data</span>
+            </>
+          ) : (
+            <span className="demo-tag">Demo data</span>
+          )}
         </header>
         <main className="content">
           <Outlet />

@@ -1,19 +1,57 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Check, FileText, IdCard, ScanFace, X } from 'lucide-react';
+import { api, errorText } from '../api/client';
 import { useStore } from '../data/store';
 import { fmtDateTime } from '../data/format';
 import { Empty, KycPill, PageHead, Person, PromptModal } from '../ui';
 
-function Doc({ label, icon }: { label: string; icon: React.ReactNode }) {
+/**
+ * A KYC document. Demo data shows a placeholder. Live data fetches the private
+ * file with the admin's token and shows it; `fileKey` is its key on the server.
+ */
+function Doc({ label, icon, fileKey, live }: { label: string; icon: React.ReactNode; fileKey?: string; live?: boolean }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [isPdf, setIsPdf] = useState(false);
+  const [note, setNote] = useState(live ? (fileKey ? 'Loading…' : 'Not uploaded') : 'Demo placeholder');
+
+  useEffect(() => {
+    if (!live || !fileKey) return;
+    let made: string | null = null;
+    let gone = false;
+    api
+      .blob(`/v1/files/${encodeURIComponent(fileKey)}`)
+      .then((b) => {
+        if (gone) return;
+        made = URL.createObjectURL(b);
+        setIsPdf(b.type === 'application/pdf');
+        setUrl(made);
+      })
+      .catch((e) => !gone && setNote(errorText(e)));
+    return () => {
+      gone = true;
+      if (made) URL.revokeObjectURL(made);
+    };
+  }, [live, fileKey]);
+
+  if (url && !isPdf) {
+    return (
+      <a className="doc" href={url} target="_blank" rel="noreferrer" title={`Open ${label}`} style={{ padding: 0, overflow: 'hidden' }}>
+        <img src={url} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+      </a>
+    );
+  }
   return (
     <div className="doc">
-      <div>{icon}{label}<div style={{ fontWeight: 500, marginTop: 2 }}>Demo placeholder</div></div>
+      <div>
+        {icon}{label}
+        <div style={{ fontWeight: 500, marginTop: 2 }}>{url ? <a href={url} target="_blank" rel="noreferrer">Open PDF</a> : note}</div>
+      </div>
     </div>
   );
 }
 
 export function WorkerKyc() {
-  const { db, reviewWorkerKyc } = useStore();
+  const { db, reviewWorkerKyc, live } = useStore();
   const [reject, setReject] = useState<string | null>(null);
   const [tab, setTab] = useState<'pending' | 'rejected'>('pending');
   const rows = db.workers.filter((w) => w.kyc === tab).sort((a, b) => a.kycSubmitted.localeCompare(b.kycSubmitted));
@@ -35,13 +73,13 @@ export function WorkerKyc() {
               <KycPill s={w.kyc} />
             </div>
             <div className="grid halves" style={{ gap: 10 }}>
-              <Doc label={`${w.kycDocType} photo`} icon={<IdCard size={22} />} />
-              <Doc label="Selfie" icon={<ScanFace size={22} />} />
+              <Doc label={`${w.kycDocType} photo`} icon={<IdCard size={22} />} fileKey={w.idPhotoKey} live={live} />
+              <Doc label="Selfie" icon={<ScanFace size={22} />} fileKey={w.selfieKey} live={live} />
             </div>
             <dl className="dl">
               <dt>ID</dt><dd className="num">{w.kycDocType} ending {w.kycDocLast4}</dd>
               <dt>Phone</dt><dd className="num">{w.phone}</dd>
-              <dt>Age / gender</dt><dd>{w.age} · {w.gender}</dd>
+              <dt>Age / gender</dt><dd>{w.age || '—'} · {w.gender}</dd>
               <dt>Location</dt><dd>{w.area}, {w.district}</dd>
               <dt>Skills</dt><dd>{w.skills.map((s) => <span key={s} className="chip">{s}</span>)}</dd>
               <dt>Experience</dt><dd>{w.experience}</dd>
@@ -73,7 +111,7 @@ export function WorkerKyc() {
 }
 
 export function BusinessKyc() {
-  const { db, reviewBusinessKyc } = useStore();
+  const { db, reviewBusinessKyc, live } = useStore();
   const [reject, setReject] = useState<string | null>(null);
   const [tab, setTab] = useState<'pending' | 'rejected'>('pending');
   const rows = db.businesses.filter((b) => b.kyc === tab).sort((a, b) => a.kycSubmitted.localeCompare(b.kycSubmitted));
@@ -95,7 +133,7 @@ export function BusinessKyc() {
               <KycPill s={b.kyc} />
             </div>
             <div className="grid thirds" style={{ gap: 10, gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
-              {b.docs.map((d) => <Doc key={d} label={d} icon={<FileText size={20} />} />)}
+              {b.docs.map((d) => <Doc key={d} label={d} icon={<FileText size={20} />} fileKey={b.docKeys?.[d]} live={live} />)}
             </div>
             <dl className="dl">
               <dt>Category</dt><dd>{b.category}</dd>

@@ -104,9 +104,9 @@ export default function CompanyTab() {
           <Btn
             title="Sign out"
             variant="dark"
-            onPress={() => {
+            onPress={async () => {
               setConfirmOut(false);
-              signOut();
+              await signOut();
               router.replace('/');
             }}
           />

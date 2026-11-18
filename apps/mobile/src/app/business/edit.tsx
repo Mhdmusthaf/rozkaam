@@ -6,7 +6,7 @@ import { Banner, Btn, Field, Header, Screen, Select, T } from '@/ui';
 
 export default function EditCompany() {
   const company = useStore((s) => s.company);
-  const updateCompany = useStore((s) => s.updateCompany);
+  const saveCompany = useStore((s) => s.saveCompany);
   const showToast = useStore((s) => s.showToast);
 
   const [f, setF] = useState({
@@ -25,7 +25,7 @@ export default function EditCompany() {
     setErrors({});
   };
 
-  const save = () => {
+  const save = async () => {
     const e: typeof errors = {};
     if (f.name.trim().length < 2) e.name = 'Enter your company name.';
     if (!f.address.trim()) e.address = 'Enter your business address.';
@@ -34,7 +34,7 @@ export default function EditCompany() {
     if (f.gstin.trim() && f.gstin.trim().length !== 15) e.gstin = 'A GSTIN has 15 characters.';
     setErrors(e);
     if (Object.keys(e).length) return;
-    updateCompany({ ...f, name: f.name.trim(), gstin: f.gstin.trim().toUpperCase(), email: f.email.trim() });
+    if (!(await saveCompany({ ...f, name: f.name.trim(), gstin: f.gstin.trim().toUpperCase(), email: f.email.trim() }))) return;
     showToast('Company details saved');
     router.back();
   };

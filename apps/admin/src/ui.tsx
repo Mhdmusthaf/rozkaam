@@ -47,7 +47,7 @@ export const AccountPill = ({ s }: { s: AccountStatus }) => (
   <Pill tone={s === 'active' ? 'ok' : s === 'restricted' ? 'warn' : 'bad'}>{titleCase(s)}</Pill>
 );
 export const KycPill = ({ s }: { s: KycStatus }) => (
-  <Pill tone={s === 'verified' ? 'ok' : s === 'pending' ? 'warn' : 'bad'}>KYC {s}</Pill>
+  <Pill tone={s === 'verified' ? 'ok' : s === 'pending' ? 'warn' : s === 'none' ? undefined : 'bad'}>{s === 'none' ? 'KYC not submitted' : `KYC ${s}`}</Pill>
 );
 
 export const initials = (name: string) => name.split(/\s+/).slice(0, 2).map((p) => p[0]).join('').toUpperCase();

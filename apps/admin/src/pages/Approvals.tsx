@@ -7,7 +7,7 @@ import type { Application } from '../data/types';
 import { AppPill, Empty, Meter, Modal, PageHead, Person, Pill, Rating, ReqPill } from '../ui';
 
 export default function Approvals() {
-  const { db, worker, business, appsFor, filled, setApplication, bulkApprove, replace } = useStore();
+  const { db, worker, business, appsFor, filled, setApplication, bulkApprove, replace, can } = useStore();
   const { id } = useParams();
   const nav = useNavigate();
   const [scope, setScope] = useState<'open' | 'filled'>('open');
@@ -37,7 +37,7 @@ export default function Approvals() {
         <td className="num">{w.jobsDone}</td>
         <td><Meter value={w.reliability} /></td>
         <td>{live ? <Pill tone={live > 1 ? 'bad' : 'warn'}>{live} strike{live > 1 ? 's' : ''}</Pill> : <span className="muted">None</span>}</td>
-        <td className="num nowrap">{a.distanceKm} km</td>
+        <td className="num nowrap">{a.distanceKm < 0 ? <span className="muted" title="Not available from the server yet">—</span> : `${a.distanceKm} km`}</td>
         <td style={{ maxWidth: 220 }}>{w.skills.map((s) => <span key={s} className="chip">{s}</span>)}</td>
         <td className="right"><div className="row gap-6" style={{ justifyContent: 'flex-end' }}>{actions}</div></td>
       </tr>
@@ -132,7 +132,7 @@ export default function Approvals() {
                 <div className="table-wrap"><table>{head}<tbody>
                   {confirmed.map((a) => row(a, <>
                     <AppPill s={a.status} />
-                    <button className="btn sm ghost" onClick={() => setSwap(a)}><Repeat size={13} /> Replace</button>
+                    {can.replaceWorker ? <button className="btn sm ghost" onClick={() => setSwap(a)}><Repeat size={13} /> Replace</button> : <span className="muted small" title="Replacing a confirmed worker is not available from the server yet">Confirmed</span>}
                   </>))}
                 </tbody></table></div>
               )}
@@ -175,7 +175,7 @@ export default function Approvals() {
               return (
                 <button key={a.id} className="pick" style={{ boxShadow: 'none', border: '1px solid var(--line)' }} onClick={() => { replace(swap.id, a.id); setSwap(null); }}>
                   <div className="row between">
-                    <Person name={w.name} sub={`${a.status === 'waitlisted' ? 'Waitlist' : 'Applied'} · ${a.distanceKm} km · reliability ${w.reliability}`} />
+                    <Person name={w.name} sub={`${a.status === 'waitlisted' ? 'Waitlist' : 'Applied'}${a.distanceKm < 0 ? '' : ` · ${a.distanceKm} km`} · reliability ${w.reliability}`} />
                     <Rating value={w.rating} />
                   </div>
                 </button>

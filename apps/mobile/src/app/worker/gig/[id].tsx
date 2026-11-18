@@ -37,6 +37,7 @@ export default function GigDetail() {
   const job = useStore((s) => s.jobs.find((j) => j.id === app?.jobId));
   const cancel = useStore((s) => s.cancelApplication);
   const toast = useStore((s) => s.showToast);
+  const demo = useStore((s) => s.mode === 'demo');
   const [sheet, setSheet] = useState(false);
 
   if (!app || !job) {
@@ -56,9 +57,10 @@ export default function GigDetail() {
   const canCancel = app.status === 'applied' || app.status === 'waitlisted' || app.status === 'confirmed';
   const showContact = ['confirmed', 'checked_in'].includes(app.status);
 
-  const doCancel = () => {
+  const doCancel = async () => {
     setSheet(false);
-    const res = cancel(app.id);
+    const res = await cancel(app.id);
+    if (!res) return;
     toast(res === 'late_cancel' ? 'Cancelled. A strike was added.' : 'Application cancelled', res === 'late_cancel' ? 'danger' : 'info');
   };
 
@@ -92,13 +94,13 @@ export default function GigDetail() {
 
       {/* What is happening right now */}
       <View style={{ marginTop: 14 }}>
-        {app.status === 'applied' ? <Banner tone="violet" icon="hourglass" title="Under review" text="The Rozkaam team is reviewing your application. In this demo a decision arrives in a few seconds." /> : null}
+        {app.status === 'applied' ? <Banner tone="violet" icon="hourglass" title="Under review" text={`The Rozkaam team is reviewing your application.${demo ? ' In this demo a decision arrives in a few seconds.' : ' You will get a notification as soon as it is decided.'}`} /> : null}
         {app.status === 'waitlisted' ? <Banner tone="info" icon="list" title="You are on the waitlist" text="All slots are confirmed. We will notify you straight away if one opens up." /> : null}
         {app.status === 'confirmed' ? (
           <Banner tone="success" icon="checkmark-circle" title="You're confirmed" text={`Report by ${time12(job.report)} on ${dayLong(job.dateISO)}. We will remind you 2 hours before, with the location.`} />
         ) : null}
         {app.status === 'checked_in' ? <Banner tone="violet" icon="location" title="You are checked in" text={`Shift ends at ${time12(job.end)}. Remember to check out before you leave the venue.`} /> : null}
-        {app.status === 'checked_out' ? <Banner tone="info" icon="time" title="Waiting for the payout" text={`${job.business} is confirming attendance. ${inr(pay)} will be added to your wallet. In this demo it takes a few seconds.`} /> : null}
+        {app.status === 'checked_out' ? <Banner tone="info" icon="time" title="Waiting for the payout" text={`${job.business} is confirming attendance. ${inr(pay)} will be added to your wallet.${demo ? ' In this demo it takes a few seconds.' : ''}`} /> : null}
         {app.status === 'paid' ? (
           <View style={{ backgroundColor: C.successSoft, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center' }}>
             <View style={{ flex: 1 }}>

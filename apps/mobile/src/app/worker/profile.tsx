@@ -8,20 +8,20 @@ import { Avatar, Btn, C, Card, Chip, Field, Header, Ionicons, KV, Pill, Screen, 
 
 export default function EditProfile() {
   const saved = useStore((s) => s.worker);
-  const update = useStore((s) => s.updateWorker);
+  const saveWorker = useStore((s) => s.saveWorker);
   const toast = useStore((s) => s.showToast);
   const [w, setW] = useState(saved);
   const [err, setErr] = useState<Record<string, string>>({});
   const set = (p: Partial<typeof w>) => setW({ ...w, ...p });
 
-  const save = () => {
+  const save = async () => {
     const e: Record<string, string> = {};
     if (w.name.trim().length < 3) e.name = 'Enter your full name.';
     if (!w.area.trim()) e.area = 'Enter your area or town.';
     if (w.skills.length === 0) e.skills = 'Pick at least one skill.';
     setErr(e);
     if (Object.keys(e).length) return;
-    update(w);
+    if (!(await saveWorker(w))) return;
     toast('Profile updated');
     router.back();
   };

@@ -4,7 +4,8 @@ import { useStore } from '../data/store';
 import { Logomark, Pill, Wordmark } from '../ui';
 
 export default function Login() {
-  const { login, toast } = useStore();
+  const { login, toast, live, requestCode, verifyCode } = useStore();
+  const [busy, setBusy] = useState(false);
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -40,8 +41,23 @@ export default function Login() {
       <section className="login-form">
         <form
           className="box col gap-16"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
+            if (busy) return;
+            if (live) {
+              // Live: the server sends (or, in its sandbox, accepts) the code and checks it.
+              setBusy(true);
+              if (step === 'phone') {
+                if (phoneOk && (await requestCode(phone))) {
+                  setStep('otp');
+                  setTimeout(() => refs.current[0]?.focus(), 50);
+                }
+              } else if (otpOk) {
+                await verifyCode(phone, otp.join(''));
+              }
+              setBusy(false);
+              return;
+            }
             if (step === 'phone') {
               if (!phoneOk) return;
               setStep('otp');
@@ -55,12 +71,14 @@ export default function Login() {
         >
           <div className="row between">
             <h1>Sign in</h1>
-            <Pill tone="warn">Demo</Pill>
+            {live ? <Pill tone="ok">Live</Pill> : <Pill tone="warn">Demo</Pill>}
           </div>
           <p className="muted">
             {step === 'phone'
               ? 'Enter your registered ops phone number to get a one-time code.'
-              : `Enter the 6-digit code for +91 ${phone}. In demo mode any 6 digits work.`}
+              : live
+                ? `Enter the 6-digit code for +91 ${phone}.`
+                : `Enter the 6-digit code for +91 ${phone}. In demo mode any 6 digits work.`}
           </p>
           {step === 'phone' ? (
             <label className="field">
@@ -95,13 +113,13 @@ export default function Login() {
               </div>
             </div>
           )}
-          <button className="btn lg block" disabled={step === 'phone' ? !phoneOk : !otpOk}>
-            {step === 'phone' ? 'Send code' : 'Verify and sign in'}
+          <button className="btn lg block" disabled={busy || (step === 'phone' ? !phoneOk : !otpOk)}>
+            {busy ? 'Please wait…' : step === 'phone' ? 'Send code' : 'Verify and sign in'}
           </button>
           {step === 'otp' && (
             <button type="button" className="btn ghost block" onClick={() => setStep('phone')}>Use a different number</button>
           )}
-          <div className="row gap-6 muted small"><ShieldCheck size={15} /> Demo build. Nothing here is connected to live data.</div>
+          <div className="row gap-6 muted small"><ShieldCheck size={15} /> {live ? 'Connected to the Rozkaam server. Only registered ops numbers can sign in.' : 'Demo build. Nothing here is connected to live data.'}</div>
         </form>
       </section>
     </div>

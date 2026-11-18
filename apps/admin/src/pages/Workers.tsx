@@ -110,7 +110,7 @@ export default function Workers() {
             <h3>Profile</h3>
             <dl className="dl mt-16">
               <dt>Phone</dt><dd className="num">{w.phone}</dd>
-              <dt>Age / gender</dt><dd>{w.age} · {w.gender}</dd>
+              <dt>Age / gender</dt><dd>{w.age || '—'} · {w.gender}</dd>
               <dt>Location</dt><dd>{w.area}, {w.district}</dd>
               <dt>Experience</dt><dd>{w.experience}</dd>
               <dt>Skills</dt><dd>{w.skills.map((s) => <span key={s} className="chip">{s}</span>)}</dd>

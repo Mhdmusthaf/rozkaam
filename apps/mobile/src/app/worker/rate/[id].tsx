@@ -36,8 +36,8 @@ export default function RateBusiness() {
           <Btn
             title="Submit rating"
             disabled={stars === 0}
-            onPress={() => {
-              rate(app.id, stars);
+            onPress={async () => {
+              if (!(await rate(app.id, stars, tags, note))) return;
               toast('Thanks for your rating');
               router.back();
             }}

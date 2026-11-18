@@ -6,20 +6,25 @@ import { Btn, C, Field, Header, Screen, T } from '@/ui';
 
 export default function Phone() {
   const role = useStore((s) => s.session.role);
+  const requestCode = useStore((s) => s.requestCode);
+  const [busy, setBusy] = useState(false);
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const digits = phone.replace(/\D/g, '');
 
-  const next = () => {
+  const next = async () => {
     if (!/^[6-9]\d{9}$/.test(digits)) {
       setError('Enter a valid 10-digit mobile number.');
       return;
     }
-    router.push({ pathname: '/otp', params: { phone: digits } });
+    setBusy(true);
+    const sent = await requestCode(digits);
+    setBusy(false);
+    if (sent) router.push({ pathname: '/otp', params: { phone: digits } });
   };
 
   return (
-    <Screen header={<Header />} footer={<Btn title="Send code" onPress={next} disabled={digits.length < 10} />}>
+    <Screen header={<Header />} footer={<Btn title="Send code" onPress={next} disabled={digits.length < 10} loading={busy} />}>
       <T v="h1">Enter your mobile number</T>
       <T v="body" color={C.muted} style={{ marginTop: 6, marginBottom: 24 }}>
         We will send a 6-digit code to verify it. {role === 'business' ? 'Use the number your team can be reached on.' : 'Use the number you want job updates on.'}

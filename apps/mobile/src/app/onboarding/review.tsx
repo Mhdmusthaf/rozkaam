@@ -9,6 +9,7 @@ import { Banner, Btn, C, Card, IMG, Ionicons, Screen, T } from '@/ui';
 export default function Review() {
   const session = useStore((s) => s.session);
   const signOut = useStore((s) => s.signOut);
+  const demo = useStore((s) => s.mode === 'demo');
   const isWorker = session.role === 'worker';
   const status = isWorker ? session.workerKyc : session.businessKyc;
   const verified = status === 'verified';
@@ -28,8 +29,8 @@ export default function Review() {
           <Btn
             title="Sign out"
             variant="outline"
-            onPress={() => {
-              signOut();
+            onPress={async () => {
+              await signOut();
               router.replace('/');
             }}
           />
@@ -62,7 +63,7 @@ export default function Review() {
         ))}
       </Card>
 
-      {!verified ? <Banner tone="violet" icon="flask" title="Sandbox mode" text="In this demo the review is approved automatically after a few seconds." style={{ marginTop: 16 }} /> : null}
+      {!verified && demo ? <Banner tone="violet" icon="flask" title="Sandbox mode" text="In this demo the review is approved automatically after a few seconds." style={{ marginTop: 16 }} /> : null}
     </Screen>
   );
 }

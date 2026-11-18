@@ -24,6 +24,7 @@ export default function AttendanceCapture() {
   const [photo, setPhoto] = useState<string | null>(null);
   const [clock, setClock] = useState(nowHM());
   const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const locate = useCallback(async () => {
     if (!job) return;
@@ -52,7 +53,7 @@ export default function AttendanceCapture() {
   const far = distanceM !== undefined && distanceM > GEOFENCE_M;
   const flagged = loc.kind === 'failed' || far;
 
-  const submit = () => {
+  const submit = async () => {
     const a = {
       at: new Date().toISOString(),
       photo,
@@ -61,9 +62,10 @@ export default function AttendanceCapture() {
       distanceM,
       flagged,
     };
-    if (isOut) checkOut(app.id, a);
-    else checkIn(app.id, a);
-    setDone(true);
+    setBusy(true);
+    const ok = isOut ? await checkOut(app.id, a) : await checkIn(app.id, a);
+    setBusy(false);
+    if (ok) setDone(true);
   };
 
   if (done) {
@@ -88,7 +90,7 @@ export default function AttendanceCapture() {
   }
 
   return (
-    <Screen header={<Header title={isOut ? 'Check out' : 'Check in'} />} footer={<Btn title={isOut ? 'Confirm check-out' : 'Confirm check-in'} icon="checkmark-circle" disabled={!photo || loc.kind === 'loading'} onPress={submit} />}>
+    <Screen header={<Header title={isOut ? 'Check out' : 'Check in'} />} footer={<Btn title={isOut ? 'Confirm check-out' : 'Confirm check-in'} icon="checkmark-circle" disabled={!photo || loc.kind === 'loading'} loading={busy} onPress={submit} />}>
       <T v="h2">{job.title}</T>
       <T v="body" color={C.muted}>
         {job.venue}

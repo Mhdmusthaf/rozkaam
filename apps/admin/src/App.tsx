@@ -17,10 +17,15 @@ import SettingsPage from './pages/Settings';
 import Audit from './pages/Audit';
 
 export default function App() {
-  const { authed } = useStore();
+  const { authed, live, loaded, loading, refresh } = useStore();
   return (
     <HashRouter>
-      {authed ? (
+      {authed && live && !loaded ? (
+        <div className="empty" style={{ minHeight: '100vh', display: 'grid', placeContent: 'center', gap: 12 }}>
+          <strong>{loading ? 'Loading from the Rozkaam server…' : 'Could not load from the Rozkaam server'}</strong>
+          {!loading && <button className="btn" onClick={() => void refresh()}>Try again</button>}
+        </div>
+      ) : authed ? (
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<Dashboard />} />

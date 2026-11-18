@@ -7,7 +7,7 @@ import { AppPill, Empty, PageHead, Person, Pill, PromptModal, Rating, ReqPill } 
 
 export default function RequirementDetail() {
   const { id } = useParams();
-  const { db, requirement, business, worker, appsFor, filled, cancelRequirement } = useStore();
+  const { db, requirement, business, worker, appsFor, filled, cancelRequirement, can } = useStore();
   const [cancel, setCancel] = useState(false);
   const r = requirement(id ?? '');
   if (!r) return <div className="card"><Empty title="Requirement not found"><Link to="/requirements" className="btn ghost mt-16">Back to requirements</Link></Empty></div>;
@@ -25,7 +25,7 @@ export default function RequirementDetail() {
     { t: r.createdAt, label: r.funded ? `Funded by ${biz.name}` : 'Waiting for the business to fund', on: r.funded },
     ...roster.filter((a) => a.checkIn).sort((a, b) => a.checkIn!.time.localeCompare(b.checkIn!.time)).map((a) => ({
       t: a.checkIn!.time,
-      label: `${worker(a.workerId).name} checked in · ${a.checkIn!.distanceM} m from venue${a.checkIn!.flag ? ' (flagged)' : ''}`,
+      label: `${worker(a.workerId).name} checked in · ${a.checkIn!.distanceM < 0 ? 'no location' : `${a.checkIn!.distanceM} m from venue`}${a.checkIn!.flag ? ' (flagged)' : ''}`,
       on: true,
     })),
     ...roster.filter((a) => a.checkOut).slice(0, 1).map((a) => ({ t: a.checkOut!.time, label: `Check-out completed (${roster.filter((x) => x.checkOut).length} workers)`, on: true })),
@@ -40,7 +40,8 @@ export default function RequirementDetail() {
         <ReqPill s={r.status} />
         {r.urgent && <Pill tone="bad"><Zap size={11} /> Urgent</Pill>}
         {(r.status === 'open' || r.status === 'filled') && <Link to={`/approvals/${r.id}`} className="btn"><UserCheck size={15} /> Manage applicants</Link>}
-        {canCancel && <button className="btn danger" onClick={() => setCancel(true)}><Ban size={15} /> Cancel requirement</button>}
+        {canCancel && can.cancelRequirement && <button className="btn danger" onClick={() => setCancel(true)}><Ban size={15} /> Cancel requirement</button>}
+        {canCancel && !can.cancelRequirement && <span className="muted small" title="Only the business can cancel today">Cancelling from here is not available from the server yet</span>}
       </PageHead>
 
       <div className="grid two">

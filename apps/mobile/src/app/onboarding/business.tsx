@@ -37,13 +37,14 @@ export default function BusinessOnboarding() {
     return Object.keys(e).length === 0;
   };
 
-  const next = () => {
-    if (!validate()) return;
-    if (step < TOTAL) setStep(step + 1);
-    else {
-      submit();
-      router.replace('/onboarding/review');
-    }
+  const [busy, setBusy] = useState(false);
+  const next = async () => {
+    if (!validate() || busy) return;
+    if (step < TOTAL) return setStep(step + 1);
+    setBusy(true);
+    const ok = await submit();
+    setBusy(false);
+    if (ok) router.replace('/onboarding/review');
   };
   const back = () => (step > 1 ? setStep(step - 1) : router.replace('/role'));
   const sub = (k: string) =>
@@ -54,7 +55,7 @@ export default function BusinessOnboarding() {
     ) : null;
 
   return (
-    <Screen header={<Header onBack={back} />} footer={<Btn title={step === TOTAL ? 'Submit for verification' : 'Continue'} onPress={next} iconRight={step === TOTAL ? undefined : 'arrow-forward'} />}>
+    <Screen header={<Header onBack={back} />} footer={<Btn title={step === TOTAL ? 'Submit for verification' : 'Continue'} loading={busy} onPress={next} iconRight={step === TOTAL ? undefined : 'arrow-forward'} />}>
       {step === 1 && (
         <>
           <StepHead step={1} total={TOTAL} title="Your business" text="Workers see your business name and rating on every job you post." />

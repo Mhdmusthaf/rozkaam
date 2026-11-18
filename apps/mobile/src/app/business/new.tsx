@@ -93,15 +93,17 @@ export default function NewRequirement() {
 
   const draft = (): ReqDraft => ({ ...d, pay, title: d.title.trim(), description: d.description.trim(), venue: d.venue.trim(), address: d.address.trim(), area: d.area.trim() });
 
-  const saveDraft = () => {
-    createRequirement(draft());
+  const saveDraft = async () => {
+    if (!(await createRequirement(draft()))) return;
     showToast('Saved as a draft');
     router.replace('/business/requirements');
   };
-  const fundNow = () => {
-    const id = createRequirement(draft());
-    fund(id);
-    router.replace(`/business/funded?id=${id}`);
+  const fundNow = async () => {
+    const id = await createRequirement(draft());
+    if (!id) return;
+    // If funding fails the requirement stays as a draft that can be funded later.
+    if (await fund(id)) router.replace(`/business/funded?id=${id}`);
+    else router.replace(`/business/requirement/${id}`);
   };
 
   const footer =

@@ -1,5 +1,6 @@
 export type AccountStatus = 'active' | 'restricted' | 'suspended' | 'banned';
-export type KycStatus = 'pending' | 'verified' | 'rejected';
+/** 'none' = signed up but has not submitted documents yet (live data only). */
+export type KycStatus = 'none' | 'pending' | 'verified' | 'rejected';
 
 export interface Strike {
   id: string;
@@ -33,6 +34,9 @@ export interface Worker {
   kycRejectReason?: string;
   upi: string;
   joined: string;
+  /** Live data only: keys of the private KYC files on the server. */
+  idPhotoKey?: string;
+  selfieKey?: string;
 }
 
 export interface Business {
@@ -52,6 +56,8 @@ export interface Business {
   kycSubmitted: string;
   kycRejectReason?: string;
   docs: string[];
+  /** Live data only: document label -> key of the private file on the server. */
+  docKeys?: Record<string, string | undefined>;
   joined: string;
 }
 
@@ -106,8 +112,10 @@ export interface Application {
   workerId: string;
   status: AppStatus;
   appliedAt: string;
+  /** Kilometres from the venue. -1 = not known (the server does not report it yet). */
   distanceKm: number;
-  checkIn?: { time: string; distanceM: number; photo: boolean; flag?: 'distance' | 'photo'; resolved?: 'accepted' | 'no_show' };
+  /** distanceM -1 = no location was captured. photoKey and reason come from live data only. */
+  checkIn?: { time: string; distanceM: number; photo: boolean; photoKey?: string; flag?: 'distance' | 'photo'; reason?: string; resolved?: 'accepted' | 'no_show' };
   checkOut?: { time: string };
 }
 
