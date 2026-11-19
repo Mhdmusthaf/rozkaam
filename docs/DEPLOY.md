@@ -1,11 +1,12 @@
 # Rozkaam — Putting it online
 
-Everything is ready to host. One file, `render.yaml`, creates the database, the API, the admin panel and the web app on Render in one go. Cost: ₹0 on Render's free plan.
+Everything is ready to host. One file, `render.yaml`, creates the API, the admin panel and the web app on Render in one go. The database is a free Neon database. Cost: ₹0.
 
 ## What you need (about 15 minutes)
 
 1. **A GitHub account** for Rozkaam — https://github.com/signup
 2. **A Render account** for Rozkaam — https://dashboard.render.com/register (sign up with that GitHub account)
+3. **A Neon account** for the database — https://console.neon.tech/signup. Create a project named `rozkaam` (region: Singapore) and copy its **connection string**. Render allows only one free database per account, and Neon's free database is not deleted after 30 days.
 
 ## Steps
 
@@ -25,10 +26,11 @@ git push -u origin master
 
 1. In Render: **New +** → **Blueprint**.
 2. Connect GitHub and pick the `rozkaam` repository.
-3. Render reads `render.yaml` and asks for three values:
+3. Render reads `render.yaml` and asks for four values:
 
 | Name | What to type |
 |---|---|
+| `DATABASE_URL` | The connection string copied from Neon. It starts with `postgresql://`. Treat it like a password. |
 | `SANDBOX_OTP` | A private 6-digit login code of your choice. **Not 123456.** Everyone you invite to test uses this code until real SMS is switched on. |
 | `ADMIN_PHONES` | The 10-digit mobile numbers allowed into the admin panel, separated by commas. |
 | `CORS_ORIGINS` | `https://rozkaam-admin.onrender.com,https://rozkaam-app.onrender.com` |
@@ -37,12 +39,11 @@ git push -u origin master
 
 ### 3. Check the addresses
 
-When it finishes, Render lists four items. Open each service to see its address:
+When it finishes, Render lists three items. Open each service to see its address:
 
 - **rozkaam-api** — the backend. Opening `/health` on it should show `{"ok":true,...}`.
 - **rozkaam-admin** — the admin panel.
 - **rozkaam-app** — the worker and business app as a website.
-- **rozkaam-db** — the database.
 
 If Render added letters to an address (for example `rozkaam-app-x7k2.onrender.com`, which happens when a name is taken), go to **rozkaam-api → Environment**, correct `CORS_ORIGINS` to the real addresses, and save. Without that, the apps cannot talk to the API.
 
@@ -56,7 +57,6 @@ If Render added letters to an address (for example `rozkaam-app-x7k2.onrender.co
 | Limit | What it means | Fix when ready |
 |---|---|---|
 | The API sleeps after 15 quiet minutes | The first tap after a pause takes about a minute | Render's paid plan (about $7 a month) |
-| The free database is deleted after 30 days | All accounts and jobs are lost unless you upgrade or move | A free Neon database: create one at https://console.neon.tech/signup and paste its connection string into `DATABASE_URL` on rozkaam-api |
 | One shared login code | Anyone who knows the code and a phone number can sign in as that number | Switch on real SMS (MSG91) before inviting the public |
 | Payments are simulated | No real money moves | Razorpay live mode, after KYC |
 

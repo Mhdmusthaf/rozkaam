@@ -1,11 +1,8 @@
 # Rozkaam on Render: one file that creates everything.
 # In Render: New + > Blueprint > pick this repository > Apply.
-# It creates the database, the API, the admin panel and the web app.
-
-databases:
-  - name: rozkaam-db
-    plan: free
-    region: singapore
+# It creates the API, the admin panel and the web app.
+# The database is a free Neon database (https://console.neon.tech): Render allows
+# only one free database per account, and Neon's free one is not deleted after 30 days.
 
 services:
   # The backend that all three apps talk to.
@@ -23,16 +20,15 @@ services:
         value: production
       - key: NODE_VERSION
         value: "22"
+      # DATABASE_URL: the connection string copied from Neon (starts with postgresql://).
       - key: DATABASE_URL
-        fromDatabase:
-          name: rozkaam-db
-          property: connectionString
+        sync: false
       # A long random value Render creates for you. Signs login tokens.
       - key: JWT_SECRET
         generateValue: true
       - key: SMS_PROVIDER
         value: sandbox
-      # You type these three in Render when you apply the blueprint.
+      # You type these in Render when you apply the blueprint.
       # SANDBOX_OTP: a private 6-digit code of your choice (not 123456).
       - key: SANDBOX_OTP
         sync: false
