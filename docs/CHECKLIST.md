@@ -1,6 +1,6 @@
 # Rozkaam — Feature checklist, 0 to 100%
 
-Last updated: 18 Nov 2026. This is the single list of everything the platform needs. Update it whenever a feature is added, changed or finished.
+Last updated: 19 Nov 2026. This is the single list of everything the platform needs. Update it whenever a feature is added, changed or finished.
 
 **Status key**
 - **Screen** — the screen exists and works on demo data in the browser.
@@ -142,7 +142,7 @@ Lives in `apps/api`. 22 automatic tests pass, including the whole loop through t
 | Accounts from docs/SETUP.md created | [ ] |
 | Hosting file (`render.yaml`) and guide (`docs/DEPLOY.md`) | [x] |
 | Production builds of API, admin panel and web app verified locally | [x] |
-| Hosted database, API, admin panel, web app | [ ] needs GitHub + Render accounts |
+| Hosted database (Neon), API, admin panel, web app (Render) | [x] live 19 Nov 2026: rozkaam-api / rozkaam-admin / rozkaam-app .onrender.com |
 | Android test build, then Play Store | [ ] |
 | iOS test build, then App Store | [ ] |
 | Real SMS OTP (MSG91 + DLT) | [ ] |
